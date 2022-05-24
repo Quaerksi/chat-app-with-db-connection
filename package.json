@@ -1,0 +1,17 @@
+{
+  "name": "chat-app-2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "ejs": "^3.1.7",
+    "express": "^4.17.3",
+    "live-server": "^1.2.2",
+    "socket.io": "^4.5.0"
+  }
+}

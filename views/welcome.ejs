@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script type="application/javascript" src="/socket.io/socket.io.js"></script>
+    <script defer language="JavaScript" type="text/javascript" src="/index.js"></script>
+  </head>
+  <body>
+    <h1>welcome</h1>
+    <p id="infoMessage"></p>
+    <p>Please enter an unique name</p>
+    <form id="formLogin" action="/index" method="POST">
+        <label for="newUser">Enter your name</label>
+        <input name="newUser" type="text" required>
+        <button type="submit">Enter chat room</button>
+    </form>
+    <h2>assigned names:</h2>
+    <ul id="listUserNames">
+    </ul>  
+
+    <h2>This chat app is made with:</h2>
+    <ul>
+      <li>JavaScript ES6/Typescript/HTML5/CSS3</li>
+      <li>express</li>
+      <li>EJS</li>
+      <li>socket.io</li>
+      <li>dotenv</li>
+    </ul>
+    <p> I will add an DB connection and I will design this page with css</p>
+  </body>
+</html>
