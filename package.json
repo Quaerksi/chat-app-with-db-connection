@@ -3,15 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
-  "scripts": {
-  },
+  "scripts": {},
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^16.0.0",
     "ejs": "^3.1.7",
     "express": "^4.17.3",
     "live-server": "^1.2.2",
+    "mongoose": "^6.3.4",
     "socket.io": "^4.5.0"
   }
 }

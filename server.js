@@ -1,19 +1,51 @@
 const express = require('express');
 const socketIo = require('socket.io');
+const cors = require("cors");
 const http = require("http");
 require('dotenv').config();
 
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 const app = express();
 app.use(express.static("public"));
-app.use(express.urlencoded({extended:false}));
+//parse request of content-type - application/json
+app.use(express.json());
+//parse requests of content-type - application/x-www-form-urlencoded
+app.use(express.urlencoded({extended: true}));
+
+var corsOptions = {
+  //hier muss noch die datenbankadressse rein
+  // origin: process.env.URL,
+  origin: "http://localhost:8081" 
+};
+
+app.use(cors(corsOptions));
 
 app.set('views', './views');
 app.set('view engine', 'ejs');
 
 const webServer = http.Server(app);
 const io = socketIo(webServer)
+
+// const db = require("./app/models").initial;
+const dbNetwork = require("./app/models");
+dbNetwork.initial();
+const db = dbNetwork.db();
+
+db.mongoose
+    .connect(db.url, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    })
+    .then(() => {
+        console.log("Connected to the database");
+    })
+    .catch(err => {
+        console.log("Cannot connect to the database!", err);
+        process.exit();
+    });
+
+    require("./app/routes/tutorial.routes")(app);
 
 
 let users = {};
@@ -23,32 +55,32 @@ let rooms = ['garden', 'water']
 /*
   Wird es mit folgender Struktur gehen?
 
-  collection trägt raumname
+  collection trägt Raumname
   (Raumnamen anzeige muss anfangs aus der DB heraus generiert werden)
 
   use chats //create new Database
-  db.member.insertOne( { room: 'roomname', message: 'user: Hello', timestamp: stamp } )//create collection with roomname an insert a message
+  db.member.insertOne( { room: 'roomname', message: 'user: Hello', timestamp: stamp } )//create collection with roomname and insert a message
   oder
   db.chat.insertOne( { message: 'user: Hello', timestamp: stamp } ) //ist bestimmt einfacher für den Anfang
 
-  Ich denke ich speuchere erstmal nur die Chaträume mit Chatverlauf. Wenn das klappt sehe ich weiter.
+  Ich denke ich speichere erstmal nur die Chaträume mit Chatverlauf. Wenn das klappt sehe ich weiter.
 
   So geht's los:
 
   Datenbank in Projekt einbinden,
-  model zurecht schneiden
-  datenbank anlegen
-  collection für einen bereits vorhandenen Raum anlegen
+  Model zurecht schneiden
+  Datenbank anlegen
+  Collection für einen bereits vorhandenen Raum anlegen
 
   Funktion für Nachricht hinzufügen kreiiren
   dannach 
   Nachrichten beim wiedereintritt anzeigen
 
-  Wo hacke ich ein?
-  - wenn ein raum betreten wird, werden Nachrichten gesendet
+  Wo hake ich ein?
+  - wenn ein Raum betreten wird, werden Nachrichten gesendet
     -> 
 
-  - wenn ein raum kreirt wird, werden Nachrichten gesendet
+  - wenn ein Raum kreiirt wird, werden Nachrichten gesendet
 
 Developement should be on local Mongodb
 */
@@ -195,10 +227,11 @@ io.on('connection', (socket) => {
 
     //broadcast messages  
     socket.on('chat message', (room, user, msg) => {
+        io.socket.po
         socket.to(room).emit('chat message', `${user}: ${msg}`);
     });
 });
 
-webServer.listen(port, () => {
-  console.log('listening on *:3000');
+webServer.listen(PORT, () => {
+  console.log(`listening on *: ${PORT}`);
 });
