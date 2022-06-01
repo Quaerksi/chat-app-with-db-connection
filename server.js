@@ -4,7 +4,10 @@ const cors = require("cors");
 const http = require("http");
 require('dotenv').config();
 
+const axios = require('axios');
+
 const PORT = process.env.PORT || 3000;
+// const PORT = process.env.PORT || 8080;
 
 const app = express();
 app.use(express.static("public"));
@@ -27,7 +30,7 @@ app.set('view engine', 'ejs');
 const webServer = http.Server(app);
 const io = socketIo(webServer)
 
-// const db = require("./app/models").initial;
+//for DB
 const dbNetwork = require("./app/models");
 dbNetwork.initial();
 const db = dbNetwork.db();
@@ -38,52 +41,29 @@ db.mongoose
         useUnifiedTopology: true
     })
     .then(() => {
-        console.log("Connected to the database");
+      console.log("Connected to the database");
+  //     var mongoose = require('mongoose');
+  //     var connection = db.mongoose.connection;
+  //     var collections = connection.db.listCollections();
+  //     // console.log(`Collections ${collections}`)
+  //     collections.toArray(function (err, names) {
+  //     // console.log(names); 
+  //     names.forEach(input => console.log(input.name))// [{ name: 'dbname.myCollection' }]
+  // });      
     })
     .catch(err => {
         console.log("Cannot connect to the database!", err);
         process.exit();
     });
 
+    
+
     require("./app/routes/tutorial.routes")(app);
 
 
 let users = {};
 
-let rooms = ['garden', 'water']
-
-/*
-  Wird es mit folgender Struktur gehen?
-
-  collection trägt Raumname
-  (Raumnamen anzeige muss anfangs aus der DB heraus generiert werden)
-
-  use chats //create new Database
-  db.member.insertOne( { room: 'roomname', message: 'user: Hello', timestamp: stamp } )//create collection with roomname and insert a message
-  oder
-  db.chat.insertOne( { message: 'user: Hello', timestamp: stamp } ) //ist bestimmt einfacher für den Anfang
-
-  Ich denke ich speichere erstmal nur die Chaträume mit Chatverlauf. Wenn das klappt sehe ich weiter.
-
-  So geht's los:
-
-  Datenbank in Projekt einbinden,
-  Model zurecht schneiden
-  Datenbank anlegen
-  Collection für einen bereits vorhandenen Raum anlegen
-
-  Funktion für Nachricht hinzufügen kreiiren
-  dannach 
-  Nachrichten beim wiedereintritt anzeigen
-
-  Wo hake ich ein?
-  - wenn ein Raum betreten wird, werden Nachrichten gesendet
-    -> 
-
-  - wenn ein Raum kreiirt wird, werden Nachrichten gesendet
-
-Developement should be on local Mongodb
-*/
+let rooms = []
 
 app.get('/', (req, res) => {
     res.render('welcome' );
@@ -93,6 +73,7 @@ app.get('/index/user/:user', (req, res) => {
   if(users[req.params.user] == null){
     return res.redirect('/')
   }
+
   res.render('index', {rooms: rooms , user: req.params.user})
 });
 
@@ -105,7 +86,19 @@ app.post('/index', (req, res) => {
   users[req.body.newUser] = {}
   io.emit('user names', Object.keys(users)); 
 
-  return res.render('index', {rooms: rooms, user: req.body.newUser});
+  //Hier die raumnamen aus der DB auslesen
+  axios.get('http://localhost:8080/api/tutorials/')
+  .then(function(response) {
+    console.log(`Response: ${Object.keys(response)}, ${response.data}`);
+    rooms = response.data;
+  })
+  .catch(function (error) {
+    // handle error
+    console.log(error);
+  })
+  .then(function(){
+    return res.render('index', {rooms: rooms, user: req.body.newUser});
+  });
 })
 
 app.get('/room/:room/user/:user', (req, res) => {
@@ -117,16 +110,28 @@ app.get('/room/:room/user/:user', (req, res) => {
 });
 
 
-//has to be fixed create room
+//create room
  app.post('/room/:room/user/:user', (req, res) => {
   
   //  console.log(`Room ${req.body.roomName}, User ${req.body.roomUser}`)
     if (rooms.includes(req.body.roomName)) {
+
       // return res.redirect('/index');
      return res.render('index', {rooms: rooms, user: req.body.roomUser});
   }
   
     rooms.push(req.body.roomName)
+
+    //create new collection
+    axios.post('http://localhost:8080/api/tutorials/newroom',{
+      room: req.body.roomName      
+    }).then(function (response) {
+      console.log(response);
+    })
+    .catch(function (error) {
+      console.log('Create new chat')
+      console.log(error);
+    });
 
     res.render('room', {room:req.body.roomName, user: req.body.roomUser});
     io.emit('new room created', req.body.roomName);
@@ -227,8 +232,21 @@ io.on('connection', (socket) => {
 
     //broadcast messages  
     socket.on('chat message', (room, user, msg) => {
-        io.socket.po
-        socket.to(room).emit('chat message', `${user}: ${msg}`);
+      const chatMessage = `${user}: ${msg}`;
+      const roomi = room;
+      //save chat message in db
+      axios.post('http://localhost:8080/api/tutorials/',{
+        message: chatMessage,
+        room: roomi      
+      }).then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+
+        // socket.post('/api/turorials/', {message: chatMessage, room: room})
+        socket.to(room).emit('chat message', chatMessage);
     });
 });
 

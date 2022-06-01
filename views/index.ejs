@@ -21,7 +21,7 @@
     <ul id="roomContainer">
         <% rooms.forEach(room => { %>
             <div><%= room %> </div>
-            <a href="http://localhost:3000/room/<%= room %>/user/<%= user %>">Join</a>
+            <a href="http://localhost:8080/room/<%= room %>/user/<%= user %>">Join</a>
         <% }); %>
     </ul>
     <form id="formCreateNewRoom" action="/room/:room/user/:user" method="POST">
