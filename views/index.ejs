@@ -19,7 +19,7 @@
             <div><%= room %> </div>
             
             <% const roomManipulated = room.replace(/\s/g, "+") %>
-            <a href="http://localhost:8080/room/<%= roomManipulated%>/user/<%= user %>">Join</a>
+            <a href="https://chat-app-with-mongodb.herokuapp.com/room/<%= roomManipulated%>/user/<%= user %>">Join</a>
         <% }); %>
     </ul>
     <form id="formCreateNewRoom" action="/room" method="POST">

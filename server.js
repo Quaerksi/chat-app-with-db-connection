@@ -111,7 +111,7 @@ app.get('/room/:room/user/:user', (req, res) => {
 
   //get all Chat messages
   answer = '';
-  axios.get(`http://localhost:8080/api/tutorials/allChatEntrys/${roomWithWhiteSpaces}`)
+  axios.get(`http://localhost:${PORT}/api/tutorials/allChatEntrys/${roomWithWhiteSpaces}`)
   .then(function(response) {
       response.data.forEach(msg => console.log(`Message ${msg}`))
       //  console.log(`Type: ${response.data}`)
@@ -143,7 +143,7 @@ app.get('/room/:room/user/:user', (req, res) => {
     rooms.push(req.body.roomName)
 
     //create new collection
-    axios.post('http://localhost:8080/api/tutorials/newroom',{
+    axios.post(`http://localhost:${PORT}/api/tutorials/newroom`,{
       room: req.body.roomName      
     }).then(function (response) {
       // console.log(response);
@@ -252,7 +252,7 @@ io.on('connection', (socket) => {
     socket.on('chat message', (room, user, msg) => {
       const chatMessage = `${user}: ${msg}`;
       //save chat message in db
-      axios.post('http://localhost:8080/api/tutorials/',{
+      axios.post(`http://localhost:${PORT}/api/tutorials/`,{
         message: chatMessage,
         room: room     
       }).then(function (response) {
