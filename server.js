@@ -34,7 +34,7 @@ dbNetwork.initial();
 const db = dbNetwork.db();
 
 db.mongoose
-    .connect(db.url, {
+    .connect(process.env.MONGODB_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true
     })
