@@ -10,12 +10,6 @@ exports.initial = ()=> {
     db.mongoose = mongoose;
     db.url = dbConfig.url;
     db.schema = modelCreate(mongoose);
-    // db.schema = modelCreate(mongoose);
-
-    // db.garden = mongoose.model('garden', modelCreate(mongoose), 'garden');
-    // db.water = mongoose.model('water', modelCreate(mongoose), 'water');
-
-    // return db;
 }
 
 exports.newCollection = (name) => {

@@ -2,18 +2,15 @@
 <html>
   <head>
     <title>Socket.IO chat</title>
-    <style>
-        a{display: block;}
-    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    
     <script type="application/javascript" src="/socket.io/socket.io.js"></script>
+    <script src="./ejs.min.js"></script>
+    <script language="JavaScript" type="text/javascript" src="/helper.js"></script>
     <script>
       const user = '<%= user %>';
     </script>
-    <script src="./ejs.min.js"></script>
     <script defer language="JavaScript" type="text/javascript" src="/index.js"></script>
   </head>
   <body>
@@ -21,10 +18,12 @@
     <ul id="roomContainer">
         <% rooms.forEach(room => { %>
             <div><%= room %> </div>
-            <a href="http://localhost:8080/room/<%= room %>/user/<%= user %>">Join</a>
+            
+            <% const roomManipulated = room.replace(/\s/g, "+") %>
+            <a href="http://localhost:8080/room/<%= roomManipulated%>/user/<%= user %>">Join</a>
         <% }); %>
     </ul>
-    <form id="formCreateNewRoom" action="/room/:room/user/:user" method="POST">
+    <form id="formCreateNewRoom" action="/room" method="POST">
         <label for="roomName">Enter room name: </label>
         <input type="text" name="roomName" required />
         <input type="hidden" type="text" name="roomUser" value="<%= user %>"/>

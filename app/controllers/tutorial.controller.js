@@ -1,34 +1,35 @@
 const dbNetwork = require("../models");
 let db = dbNetwork.db();
-// let allCollections;
 
 // Create and Save a chatMessage
 exports.create = (req, res) => {
-  console.log(`Room: ${req.body.room}, Message: ${req.body.message}`)
+  // console.log(`Room: ${req.body.room}, Message: ${req.body.message}`)
   let room;
   if(req.body.room === undefined){
-    room = 'water';
+    // room = 'water';
+    return console.log('Room name needed')
   } else {
     room = req.body.room;
   }
-  const MySchema = db[room];
+
   // Validate request
   if (req.body.message === "undefined") {
-    // if (!req.body.title) {
     res.status(400).send({ message: "Content can not be empty!" });
     return;
   }
   // console.log(`In create 3 ${req.body.titel}, ${req.body.description}`);
 
   // Create a new chat message
+  const MySchema = db[room];
   const newMessage = new MySchema({
     message: req.body.message
   });
+
   // Save Tutorial in the database
   newMessage
     .save(newMessage)
     .then(data => {
-      res.send(data);
+      // res.send(data);
     })
     .catch(err => {
       // console.log('In create 5');
@@ -43,7 +44,7 @@ exports.create = (req, res) => {
 exports.createCollection = (req, res) => {
 
   const room = req.body.room;
-  console.log(`room: ${room}, ${db[room]}`);
+  // console.log(`room: ${room}}`);
   if(!db[room]){
     db = dbNetwork.newCollection(room);
     res.status(200).send({
@@ -60,105 +61,27 @@ exports.createCollection = (req, res) => {
 // Retrieve all Chats from the database.
 exports.findAll = (req, res) => {
 
-  // var mongoose = require('mongoose');
       var connection = db.mongoose.connection;
       var collections = connection.db.listCollections();
       collections.toArray(function (err, names) {
         var namesArray = names.map((input) => input.name)
-        // names.map((input) => dbNetwork.newCollection(input.name))
-        // console.log(namesArray) 
-        //send names of existing arrays
-        // allCollections = namesArray;
         res.status(200).send(namesArray);
       });
-      // console.log(`All collections: ${allCollections}`)
 };
 
+//Get all Entrys from an chat collection, sort it and save it in an Array
+exports.allChatEntrys = (req, res) => {
 
-// Find a single Tutorial with an id
-exports.findOne = (req, res) => {
-    const id = req.params.id;
-    Tutorial.findById(id)
-      .then(data => {
-        if (!data)
-          res.status(404).send({ message: "Not found Tutorial with id " + id });
-        else res.send(data);
-      })
-      .catch(err => {
-        res
-          .status(500)
-          .send({ message: "Error retrieving Tutorial with id=" + id });
-      });
-};
-// Update a Tutorial by the id in the request
-exports.update = (req, res) => {
-    if (!req.body) {
-        return res.status(400).send({
-          message: "Data to update can not be empty!"
-        });
-      }
-      const id = req.params.id;
-      Tutorial.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
-        .then(data => {
-          if (!data) {
-            res.status(404).send({
-              message: `Cannot update Tutorial with id=${id}. Maybe Tutorial was not found!`
-            });
-          } else res.send({ message: "Tutorial was updated successfully." });
-        })
-        .catch(err => {
-          res.status(500).send({
-            message: "Error updating Tutorial with id=" + id
-          });
-        });
-};
-// Delete a Tutorial with the specified id in the request
-exports.delete = (req, res) => {
-    const id = req.params.id;
-    Tutorial.findByIdAndRemove(id)
-      .then(data => {
-        if (!data) {
-          res.status(404).send({
-            message: `Cannot delete Tutorial with id=${id}. Maybe Tutorial was not found!`
-          });
-        } else {
-          res.send({
-            message: "Tutorial was deleted successfully!"
-          });
-        }
-      })
-      .catch(err => {
-        res.status(500).send({
-          message: "Could not delete Tutorial with id=" + id
-        });
-      });
-};
-// Delete all Tutorials from the database.
-exports.deleteAll = (req, res) => {
-    Tutorial.deleteMany({})
-    .then(data => {
-      res.send({
-        message: `${data.deletedCount} Tutorials were deleted successfully!`
-      });
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while removing all tutorials."
-      });
-    });
+  const room = req.params.room;
+  const filter = {};
+
+  console.log(`Rooms in all Chat Entrys: ${room}`);
+  // console.log(`db[room]: ${db[room]}`);
   
-};
-// Find all published Tutorials
-exports.findAllPublished = (req, res) => {
-    Tutorial.find({ published: true })
-      .then(data => {
-        res.send(data);
-      })
-      .catch(err => {
-        res.status(500).send({
-          message:
-            err.message || "Some error occurred while retrieving tutorials."
-        });
-      });
-  };
+  const all = db[room].find(filter).sort({date: -1}).exec(function(err,docs){
+  const messagesInLine = docs.map(document => document.message);
+  // console.log(`All: ${messagesInLine}`)
+  res.status(200).send(messagesInLine);
+  });
+ 
+}

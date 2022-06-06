@@ -3,21 +3,36 @@ socket = io();
 //message form in chat
 var form = document.getElementById('form');
 var input = document.getElementById('input');
-// formLogin
-var welcomePageFormELement = document.getElementById('formLogin');
+var message = document.getElementById('messages');
+
 //welcome page
 var listUserNames = document.getElementById('listUserNames');
 var infoMessage = document.getElementById('infoMessage');
+// formLogin
+var welcomePageFormELement = document.getElementById('formLogin');
 
 //rooms seen on index page
 const roomContainer = document.getElementById('roomContainer');
 
 // ********************************* function area *********************************//
+
 //append a message to the message area
 const appendMessage = msg => {
     var item = document.createElement('li');
     item.textContent = `${msg}`;
     messages.appendChild(item);
+}
+
+// ********************************* db chat message filling *********************************//
+
+if(messageDB){
+    // console.log(`index.js 1: ${messageDB}`)
+    let unescapedString = messageDB.replace(/\&#34;/g, '"')
+    // console.log(`index.js 2: ${unescapedString}`)
+    let unescapedArray = JSON.parse(unescapedString);
+    unescapedArray.forEach(msg => appendMessage(`Old message from ${msg}`) )
+} else {
+    appendMessage(`No old messages`)
 }
 
 // ********************************* user management *********************************//
@@ -43,7 +58,7 @@ socket.on('user names', users => {
 
 //in a chat room
 if(form != null){
-    console.log(`Room: ${room} User: ${user}`);
+    // console.log(`Room: ${room} User: ${user}`);
 
     //send the name of the new member
     socket.emit('new chat member', room, user);
@@ -70,10 +85,11 @@ socket.on('member gone', function(member){
 // ***************************************landing page************************************//
 
 socket.on('new room created', (room) => {
+    console.log(`Create new room: ${room}, ${user}`)
     let newElement = document.createElement('div');
     newElement.innerText = room;
     let newLink = document.createElement('a');
-    newLink.href = `http://localhost:3000/room/${room}/user/${user}`;
+    newLink.href = `http://localhost:8080/room/${room}/user/${user}`;
     newLink.innerText = 'Join';
     roomContainer.append(newElement);
     roomContainer.append(newLink);
@@ -85,6 +101,8 @@ socket.on('chat message', function(msg) {
     appendMessage(msg);
     window.scrollTo(0, document.body.scrollHeight);
 });
+
+
 
 
 

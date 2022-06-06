@@ -17,9 +17,7 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
 var corsOptions = {
-  //hier muss noch die datenbankadressse rein
-  // origin: process.env.URL,
-  origin: "http://localhost:8081" 
+  origin: process.env.ORIGIN,
 };
 
 app.use(cors(corsOptions));
@@ -41,28 +39,17 @@ db.mongoose
         useUnifiedTopology: true
     })
     .then(() => {
-      console.log("Connected to the database");
-  //     var mongoose = require('mongoose');
-  //     var connection = db.mongoose.connection;
-  //     var collections = connection.db.listCollections();
-  //     // console.log(`Collections ${collections}`)
-  //     collections.toArray(function (err, names) {
-  //     // console.log(names); 
-  //     names.forEach(input => console.log(input.name))// [{ name: 'dbname.myCollection' }]
-  // });      
+      console.log("Connected to the database");     
     })
     .catch(err => {
         console.log("Cannot connect to the database!", err);
         process.exit();
     });
 
-    
-
     require("./app/routes/tutorial.routes")(app);
 
 
 let users = {};
-
 let rooms = []
 
 app.get('/', (req, res) => {
@@ -79,44 +66,76 @@ app.get('/index/user/:user', (req, res) => {
 
 app.post('/index', (req, res) => {
 
-  if(users[req.body.newUser] != null){
+  if(users[req.body.newUser] != null || req.body.newUser.includes(' ')){
     return res.redirect('/'); 
   }
 
+  //start user management
   users[req.body.newUser] = {}
   io.emit('user names', Object.keys(users)); 
 
-  //Hier die raumnamen aus der DB auslesen
+  //read room names from db
   axios.get('http://localhost:8080/api/tutorials/')
   .then(function(response) {
-    console.log(`Response: ${Object.keys(response)}, ${response.data}`);
+    // console.log(`Response: ${Object.keys(response)}, ${response.data}`);
     rooms = response.data;
+    rooms.forEach(name => {
+      axios.post('http://localhost:8080/api/tutorials/newroom',{
+      message: 'room created',
+      room: name      
+    }).then(function (response) {
+      // console.log(response);
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
   })
+})
   .catch(function (error) {
     // handle error
     console.log(error);
   })
   .then(function(){
-    return res.render('index', {rooms: rooms, user: req.body.newUser});
+     return res.render('index', {rooms: rooms, user: req.body.newUser});
   });
 })
 
 app.get('/room/:room/user/:user', (req, res) => {
 
-  if (users[req.params.user] == null|| !rooms.includes(req.params.room)) {
+  const roomWithWhiteSpaces = req.params.room.replace(/\+/g, " ")
+  //make plus in room to whitespace
+  if (users[req.params.user] == null|| !rooms.includes(roomWithWhiteSpaces)) {
     return res.redirect('/')
   }
-    return res.render('room', {room:req.params.room, user:req.params.user});
+
+  //get all Chat messages
+  answer = '';
+  axios.get(`http://localhost:8080/api/tutorials/allChatEntrys/${roomWithWhiteSpaces}`)
+  .then(function(response) {
+      response.data.forEach(msg => console.log(`Message ${msg}`))
+      //  console.log(`Type: ${response.data}`)
+        if(response.data != ''){
+          answer = response.data;
+        }
+        // console.log(`answer ${answer}`)
+        if(answer != '') {
+          answer = JSON.stringify(answer);
+        }
+      return res.render('room', {room:roomWithWhiteSpaces, user:req.params.user, messages:answer});
+    })
+  .catch(function (error) {
+    // handle errors
+    console.log(error);
+  })
+
 });
 
 
 //create room
- app.post('/room/:room/user/:user', (req, res) => {
+  app.post('/room', (req, res) => {
   
-  //  console.log(`Room ${req.body.roomName}, User ${req.body.roomUser}`)
+  //console.log(`Room ${req.body.roomName}, User ${req.body.roomUser}`)
     if (rooms.includes(req.body.roomName)) {
-
-      // return res.redirect('/index');
      return res.render('index', {rooms: rooms, user: req.body.roomUser});
   }
   
@@ -126,14 +145,13 @@ app.get('/room/:room/user/:user', (req, res) => {
     axios.post('http://localhost:8080/api/tutorials/newroom',{
       room: req.body.roomName      
     }).then(function (response) {
-      console.log(response);
+      // console.log(response);
     })
     .catch(function (error) {
-      console.log('Create new chat')
       console.log(error);
     });
 
-    res.render('room', {room:req.body.roomName, user: req.body.roomUser});
+    res.render('room', {room:req.body.roomName, user: req.body.roomUser, messages:''});
     io.emit('new room created', req.body.roomName);
  });
 
@@ -160,7 +178,6 @@ io.on('connection', (socket) => {
   //socket disconnect
   socket.on('disconnect', () => {
 
-
     let index2;
     let index1 = Object.values(users).findIndex((object) => {
         
@@ -180,7 +197,7 @@ io.on('connection', (socket) => {
 
       // console.log(`Disconnect: index1 = ${index1}, index2 = ${index2}`);
 
-      //if socket disconnect is from a chat room, then delete entry and send message to the remaining chat members
+      //if socket disconnect from a chat room, then delete entry and send message to the remaining chat members
       if(typeof Object.values(users)[index1] !== 'undefined' ){
 
         const name = Object.keys(users)[index1];
@@ -233,13 +250,12 @@ io.on('connection', (socket) => {
     //broadcast messages  
     socket.on('chat message', (room, user, msg) => {
       const chatMessage = `${user}: ${msg}`;
-      const roomi = room;
       //save chat message in db
       axios.post('http://localhost:8080/api/tutorials/',{
         message: chatMessage,
-        room: roomi      
+        room: room     
       }).then(function (response) {
-        console.log(response);
+        // console.log(response);
       })
       .catch(function (error) {
         console.log(error);
