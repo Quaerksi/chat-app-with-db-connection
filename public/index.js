@@ -16,34 +16,37 @@ const roomContainer = document.getElementById('roomContainer');
 
 // ********************************* function area *********************************//
 
+
 //append a message to the message area
-const appendMessage = msg => {
+function appendMessage(msg) {
     var item = document.createElement('li');
     item.textContent = `${msg}`;
-    messages.appendChild(item);
+    message.appendChild(item);
 }
 
 // ********************************* db chat message filling *********************************//
 
-if(messageDB){
+if(messageDB && messageDB.length > 1){
     // console.log(`index.js 1: ${messageDB}`)
     let unescapedString = messageDB.replace(/\&#34;/g, '"')
     // console.log(`index.js 2: ${unescapedString}`)
     let unescapedArray = JSON.parse(unescapedString);
     unescapedArray.forEach(msg => appendMessage(`Old message from ${msg}`) )
-} else {
-    appendMessage(`No old messages`)
+} else if (form != null && messageDB.length == 0){
+     appendMessage(`No old messages`)
 }
 
 // ********************************* user management *********************************//
 
 //at the welcome page
-if(listUserNames != null){
+if(listUserNames){
+    // console.log(`at welcome page`)
     socket.emit('send user names');
 }
 
 socket.on('user names', users => {
 
+    // console.log(`In user  names ${users}`)
     while (listUserNames.lastElementChild) {
         listUserNames.removeChild(listUserNames.lastElementChild);
     }

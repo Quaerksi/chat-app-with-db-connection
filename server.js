@@ -1,4 +1,3 @@
-//fclCq8AeGVKdWjmr new-user
 const express = require('express');
 const socketIo = require('socket.io');
 const cors = require("cors");
@@ -8,12 +7,13 @@ require('dotenv').config();
 const axios = require('axios');
 
 const PORT = process.env.PORT || 8080;
-// const PORT = process.env.PORT || 8080;
 
 const app = express();
 app.use(express.static("public"));
+
 //parse request of content-type - application/json
 app.use(express.json());
+
 //parse requests of content-type - application/x-www-form-urlencoded
 app.use(express.urlencoded({extended: true}));
 
@@ -35,11 +35,32 @@ dbNetwork.initial();
 const db = dbNetwork.db();
 
 db.mongoose
-    .connect(process.env.MONGODB_URL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
+  .connect(process.env.MONGODB_URL, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+  })
+  .then(() => {
+    //read room names from db
+    axios.get(`http://localhost:${PORT}/api/tutorials/`)
+    .then(function(response) {
+      // console.log(`Response: ${Object.keys(response)}, ${response.data}`);
+      rooms = response.data;
+      rooms.forEach(name => {
+        axios.post(`http://localhost:${PORT}/api/tutorials/newroom`,{
+        message: 'room created',
+        room: name      
+      }).then(function (response) {
+        // console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
     })
-    .then(() => {
+  })
+  .catch(function (error) {
+    // handle error
+    console.log(error);
+  })
       console.log("Connected to the database");     
     })
     .catch(err => {
@@ -47,13 +68,14 @@ db.mongoose
         process.exit();
     });
 
-    require("./app/routes/tutorial.routes")(app);
-
 
 let users = {};
 let rooms = []
 
+require("./app/routes/tutorial.routes")(app);
+
 app.get('/', (req, res) => {
+  // console.log(users);
     res.render('welcome' );
   });
 
@@ -61,7 +83,7 @@ app.get('/index/user/:user', (req, res) => {
   if(users[req.params.user] == null){
     return res.redirect('/')
   }
-
+  
   res.render('index', {rooms: rooms , user: req.params.user})
 });
 
@@ -73,32 +95,9 @@ app.post('/index', (req, res) => {
 
   //start user management
   users[req.body.newUser] = {}
-  io.emit('user names', Object.keys(users)); 
+  io.emit('user names', Object.keys(users));
 
-  //read room names from db
-  axios.get(`http://localhost:${PORT}/api/tutorials/`)
-  .then(function(response) {
-    // console.log(`Response: ${Object.keys(response)}, ${response.data}`);
-    rooms = response.data;
-    rooms.forEach(name => {
-      axios.post(`http://localhost:${PORT}/api/tutorials/newroom`,{
-      message: 'room created',
-      room: name      
-    }).then(function (response) {
-      // console.log(response);
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
-  })
-})
-  .catch(function (error) {
-    // handle error
-    console.log(error);
-  })
-  .then(function(){
-     return res.render('index', {rooms: rooms, user: req.body.newUser});
-  });
+  return res.render('index', {rooms: rooms, user: req.body.newUser});
 })
 
 app.get('/room/:room/user/:user', (req, res) => {
