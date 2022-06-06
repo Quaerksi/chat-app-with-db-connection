@@ -1,3 +1,4 @@
+//fclCq8AeGVKdWjmr new-user
 const express = require('express');
 const socketIo = require('socket.io');
 const cors = require("cors");
@@ -6,7 +7,7 @@ require('dotenv').config();
 
 const axios = require('axios');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 // const PORT = process.env.PORT || 8080;
 
 const app = express();
@@ -75,12 +76,12 @@ app.post('/index', (req, res) => {
   io.emit('user names', Object.keys(users)); 
 
   //read room names from db
-  axios.get('http://localhost:8080/api/tutorials/')
+  axios.get(`http://localhost:${PORT}/api/tutorials/`)
   .then(function(response) {
     // console.log(`Response: ${Object.keys(response)}, ${response.data}`);
     rooms = response.data;
     rooms.forEach(name => {
-      axios.post('http://localhost:8080/api/tutorials/newroom',{
+      axios.post(`http://localhost:${PORT}/api/tutorials/newroom`,{
       message: 'room created',
       room: name      
     }).then(function (response) {
